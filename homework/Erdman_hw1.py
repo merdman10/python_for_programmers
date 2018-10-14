@@ -8,7 +8,6 @@ def kaprekar(x):
     x_sortDown = ''.join(sorted(x_str,reverse=True))
     x_Up, x_Down = (int(x_sortUp), int(x_sortDown))
     y = x_Down - x_Up
-
     return y
 
 def kap_iter(x):
