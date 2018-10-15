@@ -3,7 +3,8 @@ Final project for Python for Programmers course
 
 Play Boggle!!!
 '''
-        
+ 
+import random
 
 def letter_list():
     letDist = {
@@ -32,19 +33,37 @@ def letter_list():
         'W':2,
         'X':1,
         'Y':2,
-        'Z':1}
+        'Z':1  }
     letters = []
     for i,j in letDist.items():
         letters.extend([i]*j)
     return letters
 
-print(letter_assign())
+def letter_select(letters):
+    l = random.randint(0,len(letters)-1)
+    return letters[l]
 
-n = 5
-board = []
-for i in range(n):
-    row = []
-    for j in range(n):
-        row.append(letter_select())
-    board.append(row)
+def create_board(n, letters):
+    board = []
+    for i in range(n):
+        row = []
+        for j in range(n):
+            row.append(letter_select(letters))
+        board.append(row)
+    return board
 
+def print_board(board):
+    for row in range(len(board)):
+        print('+' + '––––-+'*len(board[0]))
+        print('|' + '     |'*len(board[0]))
+        print('|', end='')
+        for col in range(len(board[row])):
+            print(' ',board[row][col], end='  |')
+        print(' ') #To change lines 
+        print('|' + '     |'*len(board[0]))
+    print('+' + '––-––+'*(len(board[0])))
+    
+
+n = 5 #defines board size
+board = create_board(n, letter_list())
+print_board(board)
