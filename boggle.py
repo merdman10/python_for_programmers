@@ -130,9 +130,8 @@ def letter_list():
         'X':1,
         'Y':2,
         'Z':1  }
-    letters = []
-    for i,j in letDist.items():
-        letters.extend([i]*j)
+    lst = [[i]*j for i,j in letDist.items()]
+    letters = [x for sublist in lst for x in sublist]
     return letters
 
 def score(word):
@@ -152,7 +151,7 @@ def score(word):
     return points
     
 n = 5 #defines board size
-game_time = datetime.timedelta(minutes=1)
+game_time = datetime.timedelta(minutes=3)
 d = enchant.Dict('en_US')
 letters = letter_list()
 myboard = Board(n, letters)
