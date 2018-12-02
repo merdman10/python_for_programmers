@@ -4,7 +4,7 @@ Final project for Python for Programmers course
 Play Boggle!!!
 '''
  
-import random
+import random, enchant, datetime
 
 class Board():
 
@@ -12,11 +12,11 @@ class Board():
         self.size = size
         self.board = self.create_board(self.size, letters)
 
-    def __init__(self, fixed_board):
-        size = len(fixed_board)
-        assert(size == len(fixed_board[0]))
-        self.size = size
-        self.board = fixed_board
+#    def __init__(self, fixed_board):
+#        size = len(fixed_board)
+#        assert(size == len(fixed_board[0]))
+#        self.size = size
+#        self.board = fixed_board
 
     @classmethod
     def letter_select(cls, letters):
@@ -56,18 +56,13 @@ class Board():
         return start
     
     def find_word(self, current_location, remaining_word, used_locations):
-        
-        print('Current letter:', remaining_word[0])
         letter = Letter(current_location, remaining_word[0])        
-
         if remaining_word[1:] == '':
             letter.children = None
             return letter
         else:
             used_locations.append(current_location) 
-            print('used loc:',used_locations)
             next_letter = self.get_next_letter(current_location, remaining_word[1:], used_locations)
-            print('next letter',next_letter)
             for loc in next_letter:
                 next_Letter = self.find_word(loc, remaining_word[1:], used_locations[:])
                 if next_Letter != []:
@@ -91,7 +86,6 @@ class Board():
         valid_locations = [index for index in filter_locations if index not in used_locations]
         next_letter = []
         for index in valid_locations:
-            #print('index:',index)
             if remaining_word[0] == self.board[index[0]][index[1]]:
                 next_letter.append(index)
         return next_letter
@@ -101,7 +95,6 @@ class Letter():
         self.location = current_location
         self.character = character
         self.children = []
-        self.valid = ''
 
     def __str__(self):
         return '({}, {}, {})'.format(self.location, self.character, self.children)
@@ -141,20 +134,58 @@ def letter_list():
     for i,j in letDist.items():
         letters.extend([i]*j)
     return letters
+
+def score(word):
+    word_len = len(word)
+    if word_len == 4:
+        points = 1
+    elif word_len == 5:
+        points = 2
+    elif word_len == 6:
+        points = 3
+    elif word_len == 7:
+        points = 5
+    elif word_len == 8:
+        points = 11
+    elif word_len > 8:
+        points = word_len * 2
+    return points
     
-
 n = 5 #defines board size
+game_time = datetime.timedelta(minutes=1)
+d = enchant.Dict('en_US')
 letters = letter_list()
-#myboard = Board(n, letters)
-myboard = Board([['A', 'B', 'C'],['B', 'D', 'D'],['C','E','C']])
+myboard = Board(n, letters)
 myboard.print()
-#word = input('Type a word in the board:').upper()
-word = 'ADDP'
-firsts = myboard.find_first(word)
+points = 0
+found_words = []
 
-#stuff to be coded
-solutions = []
-used_locations = []
-for first in firsts:
-    solutions.append(myboard.find_word(first, word, used_locations[:]))
-print('solutions: ',solutions)
+print('Time reminaing: 3 minutes')
+start = datetime.datetime.now()
+while datetime.datetime.now() < start + game_time:
+    word = input('Type a word on the board:').upper()
+    if len(word) > 3:
+        check = d.check(word)
+        if check == True:
+            firsts = myboard.find_first(word)
+            solutions = []
+            used_locations = []
+            for first in firsts:
+                pot_soln = myboard.find_word(first, word, used_locations[:])
+                if pot_soln == []:
+                    pass
+                else:
+                    solutions.append(pot_soln)
+            if solutions == []:
+                print('Not on the board. Try again.')
+            else:
+                found_words.append(word)
+        else:
+            print('Not a word. Try again.')
+    else:
+        print('Word is too short. Try again')
+print('Time\'s up')
+for word in set(found_words):
+    points += score(word)
+print('Score: {}'.format(points))
+print('Number of words found: {}'.format(len(set(found_words))))
