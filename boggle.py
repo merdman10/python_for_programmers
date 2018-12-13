@@ -1,5 +1,6 @@
-'''Monica Erdman
-Final project for Python for Programmers course
+'''
+Monica Erdman
+Final project for UCSC Python for Programmers course
 
 Play Boggle!!!
 '''
@@ -12,41 +13,29 @@ class Board():
         self.size = size
         self.board = self.create_board(self.size, letters)
 
-#    def __init__(self, fixed_board):
-#        size = len(fixed_board)
-#        assert(size == len(fixed_board[0]))
-#        self.size = size
-#        self.board = fixed_board
-
-    @classmethod
+    @classmethod    #randomized selection of letters from a set list
     def letter_select(cls, letters):
         l = random.randint(0,len(letters)-1)
         return letters[l]
     
-    @classmethod
+    @classmethod    #selects letters to form a boggle board of a defined size
     def create_board(cls, size, letters):
         board = []
         for i in range(size):
-            row = []
-            for j in range(size):
-                row.append(cls.letter_select(letters))
+            row = [cls.letter_select(letters) for j in range(size)]
             board.append(row)
         return board
     
-    def print(self):
+    def print(self):    #prints the board to the screen with letters spaced in a grid
         for row in range(len(self.board)):
-            #print('+' + '––––-+'*len(board[0]))
-            #print('|' + '     |'*len(board[0]))
             print()
             print(end=' ')
             for col in range(len(self.board[row])):
                 print(' ', self.board[row][col], end = ' ')
             print(' ') #To change lines 
-            #print('|' + '     |'*len(board[0]))
-        #print('+' + '––-––+'*(len(board[0])))
         print()
     
-    def find_first(self, word):
+    def find_first(self, word): #finds the locations of the first letter in the user-derived word
         start = []
         for i, row in enumerate(self.board):
             for j, x in enumerate(row):
@@ -56,25 +45,34 @@ class Board():
         return start
     
     def find_word(self, current_location, remaining_word, used_locations):
-        letter = Letter(current_location, remaining_word[0])        
-        if remaining_word[1:] == '':
-            letter.children = None
-            return letter
-        else:
-            used_locations.append(current_location) 
-            next_letter = self.get_next_letter(current_location, remaining_word[1:], used_locations)
-            for loc in next_letter:
-                next_Letter = self.find_word(loc, remaining_word[1:], used_locations[:])
-                if next_Letter != []:
-                    letter.children.append(next_Letter)
-                else:
-                    pass
-            if letter.children == []:
-                return []
-            else:
+        '''
+        Uses recursion to find the user-derived word on the boggle board;
+        Makes use of try-except in case an untested error case occurs
+        '''
+        try:
+            letter = Letter(current_location, remaining_word[0])        
+            if remaining_word[1:] == '':    #when at the end of the word
+                letter.children = None
                 return letter
+            else:                           #when letters are left to be found in the word
+                used_locations.append(current_location) #no re-using letters
+                next_location = self.get_next_letter(current_location, remaining_word[1:], used_locations)
+                for loc in next_location:
+                    #recurse
+                    next_Letter = self.find_word(loc, remaining_word[1:], used_locations[:])
+                    if next_Letter != []:   #when the next letter is found, stores children
+                        letter.children.append(next_Letter)
+                    else:                   #when the next letter doesn't exist
+                        pass
+                if letter.children == []:   #only returns a solution if the whole word is found
+                    return []
+                else:
+                    return letter
+        except Exception as e:
+            print('Unexpected error. The error message is', e)
 
     def get_next_letter(self, current_location, remaining_word, used_locations):
+    #finds the location(s) of the next letter in the word
         i, j = current_location
         possible_locations = [(i-1,j-1),(i-1,j),(i-1,j+1),(i,j-1),(i,j+1),(i+1,j-1),(i+1,j),(i+1,j+1)]
         filter_locations = [] #make sure locations are on the board
@@ -90,19 +88,16 @@ class Board():
                 next_letter.append(index)
         return next_letter
 
-class Letter():
+class Letter(): #used to create linked list of class Letters and subsequent Letters
     def __init__(self, current_location, character):
         self.location = current_location
         self.character = character
         self.children = []
 
-    def __str__(self):
+    def __repr__(self): #defines how to print Letters
         return '({}, {}, {})'.format(self.location, self.character, self.children)
-
-    def __repr__(self):
-        return self.__str__()
         
-def letter_list():
+def letter_list():  #letter distribution of scrabble
     letDist = {
         'A':9,
         'B':2,
@@ -134,7 +129,7 @@ def letter_list():
     letters = [x for sublist in lst for x in sublist]
     return letters
 
-def score(word):
+def score(word):    #tallies the score
     word_len = len(word)
     if word_len == 4:
         points = 1
@@ -151,21 +146,22 @@ def score(word):
     return points
     
 n = 5 #defines board size
-game_time = datetime.timedelta(minutes=3)
-d = enchant.Dict('en_US')
+mins = 3 #defines the game length, in minutes
+game_time = datetime.timedelta(minutes=mins)
+d = enchant.Dict('en_US')   #valid words are English words
 letters = letter_list()
 myboard = Board(n, letters)
 myboard.print()
 points = 0
 found_words = []
 
-print('Time reminaing: 3 minutes')
+print('Time remaining: {} minutes'.format(mins))
 start = datetime.datetime.now()
 while datetime.datetime.now() < start + game_time:
-    word = input('Type a word on the board:').upper()
-    if len(word) > 3:
-        check = d.check(word)
-        if check == True:
+    word = input('Type a word on the board: ').upper()
+    if len(word) > 3:   #defines minimal word length
+        check = d.check(word)   #check if input is a word first
+        if check == True:   #if it's a word, find it on the board
             firsts = myboard.find_first(word)
             solutions = []
             used_locations = []
@@ -176,15 +172,18 @@ while datetime.datetime.now() < start + game_time:
                 else:
                     solutions.append(pot_soln)
             if solutions == []:
-                print('Not on the board. Try again.')
+                print('Not on the board. Try again.')   #when word doesn't exist on the board
             else:
-                found_words.append(word)
+                if word in found_words:
+                    print('You already found this word. Try again.')    #inform user when word has already been found
+                else:
+                    found_words.append(word)    #catch all the found words
         else:
-            print('Not a word. Try again.')
+            print('Not a word. Try again.') #when input is not a word
     else:
-        print('Word is too short. Try again')
+        print('Word is too short. Try again')   #when input word length is too short
 print('Time\'s up')
-for word in set(found_words):
+for word in set(found_words):   #don't score words twice
     points += score(word)
 print('Score: {}'.format(points))
 print('Number of words found: {}'.format(len(set(found_words))))
